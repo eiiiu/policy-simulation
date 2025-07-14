@@ -22,6 +22,85 @@ interface UserParameters {
   hasHomeLoan?: boolean;
 }
 
+interface PolicyData {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  currentRate: string | number;
+  scenarios: Array<{
+    rate: string | number;
+    label: string;
+    change: number;
+  }>;
+  impactFlow: Array<{
+    step: number;
+    title: string;
+    description: string;
+  }>;
+}
+
+interface ScenarioData {
+  rate: string | number;
+  label: string;
+  change: number;
+}
+
+interface SimulationResults {
+  policy: PolicyData | null;
+  scenario: ScenarioData;
+  userParams: UserParameters;
+  simple: {
+    monthlyImpact: number;
+    confidence: string;
+    implementationDate: string;
+  };
+  detailed: {
+    scenarios: Array<{
+      name: string;
+      impact: number;
+      probability: number;
+    }>;
+    timeline: Array<{
+      period: string;
+      impact: number;
+    }>;
+  };
+  expert: {
+    assumptions: string[];
+    sensitivity: Array<{
+      parameter: string;
+      impact: string;
+    }>;
+  };
+}
+
+interface FiscalResults {
+  policy: PolicyData | null;
+  scenario: ScenarioData;
+  taxRevenue: {
+    currentTotal: number;
+    impactAmount: number;
+    newTotal: number;
+    impactPercentage: number;
+  };
+  alternativeTaxes: Array<{
+    taxType: string;
+    rate: string;
+    probability: number;
+    impact: string;
+  }>;
+  economicImpact: {
+    gdpImpact: number;
+    employmentImpact: number;
+    consumptionImpact: number;
+  };
+  timeline: Array<{
+    year: string;
+    impact: number;
+  }>;
+}
+
 export default function Home() {
   const [currentStep, setCurrentStep] = useState(1);
   const [analysisType, setAnalysisType] = useState(''); // 'personal' or 'fiscal'
@@ -32,11 +111,11 @@ export default function Home() {
     age: ''
   });
   const [selectedPolicy, setSelectedPolicy] = useState('');
-  const [selectedPolicyData, setSelectedPolicyData] = useState(null);
-  const [selectedScenario, setSelectedScenario] = useState(null);
+  const [selectedPolicyData, setSelectedPolicyData] = useState<PolicyData | null>(null);
+  const [selectedScenario, setSelectedScenario] = useState<ScenarioData | null>(null);
   const [showPolicyModal, setShowPolicyModal] = useState(false);
-  const [simulationResults, setSimulationResults] = useState(null);
-  const [fiscalResults, setFiscalResults] = useState(null);
+  const [simulationResults, setSimulationResults] = useState<SimulationResults | null>(null);
+  const [fiscalResults, setFiscalResults] = useState<FiscalResults | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const policies = [
@@ -268,7 +347,7 @@ export default function Home() {
     setCurrentStep(analysisType === 'personal' ? 4 : 3);
   };
 
-  const getScenarioImpact = (policyId: string, scenario: any) => {
+  const getScenarioImpact = (policyId: string, scenario: ScenarioData | null) => {
     if (!scenario) return 0;
     
     const baseImpacts = {
@@ -284,7 +363,7 @@ export default function Home() {
     return scenario.change > 0 && policyId !== 'child-support' ? -Math.abs(impact) : Math.abs(impact);
   };
 
-  const getTaxRevenueImpact = (policyId: string, scenario: any) => {
+  const getTaxRevenueImpact = (policyId: string, scenario: ScenarioData | null) => {
     if (!scenario) return 0;
     
     // 税収への影響（兆円単位）
@@ -300,7 +379,9 @@ export default function Home() {
     return baseImpacts[policyId as keyof typeof baseImpacts] || 0;
   };
 
-  const getAlternativeTaxOptions = (policyId: string, scenario: any) => {
+  const getAlternativeTaxOptions = (policyId: string, scenario: ScenarioData | null) => {
+    if (!scenario) return [];
+    
     const revenueGap = getTaxRevenueImpact(policyId, scenario);
     
     if (revenueGap >= 0) {
@@ -356,14 +437,14 @@ export default function Home() {
     }
   };
 
-  const handlePolicySelect = (policyId: string, scenario: any) => {
+  const handlePolicySelect = (policyId: string, scenario: ScenarioData) => {
     setSelectedPolicy(policyId);
-    setSelectedPolicyData(policies.find(p => p.id === policyId));
+    setSelectedPolicyData(policies.find(p => p.id === policyId) || null);
     setSelectedScenario(scenario);
     setShowPolicyModal(false);
   };
 
-  const openPolicyModal = (policy: any) => {
+  const openPolicyModal = (policy: PolicyData) => {
     setSelectedPolicyData(policy);
     setShowPolicyModal(true);
   };
