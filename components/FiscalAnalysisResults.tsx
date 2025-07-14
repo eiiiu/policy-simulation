@@ -25,7 +25,11 @@ interface FiscalAnalysisResultsProps {
 }
 
 export default function FiscalAnalysisResults({ results }: FiscalAnalysisResultsProps) {
-  const { policy, scenario, taxRevenue, alternativeTaxes, economicImpact, timeline, regionalImpact } = results;
+  const { policy, scenario, taxRevenue, alternativeTaxes, economicImpact, timeline, regionalImpact } = results || {};
+  
+  if (!results) {
+    return <div>Loading...</div>;
+  }
 
   const getImpactColor = (impact: number) => {
     if (impact > 0) return 'text-green-600';

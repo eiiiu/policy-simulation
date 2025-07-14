@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Calculator, TrendingUp, Users, MapPin, BarChart3, Lightbulb, ChevronRight, Info, Eye } from 'lucide-react';
+import FiscalAnalysisResults from '@/components/FiscalAnalysisResults';
 import SimulationResults from '@/components/SimulationResults';
 import PolicyDetailModal from '@/components/PolicyDetailModal';
 
@@ -115,7 +116,7 @@ export default function Home() {
   const [selectedScenario, setSelectedScenario] = useState<ScenarioData | null>(null);
   const [showPolicyModal, setShowPolicyModal] = useState(false);
   const [simulationResults, setSimulationResults] = useState<SimulationResults | null>(null);
-  const [fiscalResults, setFiscalResults] = useState<FiscalResults | null>(null);
+  const [fiscalResults, setFiscalResults] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const policies = [
@@ -321,6 +322,25 @@ export default function Home() {
       const mockFiscalResults = {
         policy: selectedPolicyData,
         scenario: selectedScenario,
+        regionalImpact: {
+          topRegions: [
+            { name: '東京都', impact: 1250.5, changeRate: 2.1 },
+            { name: '大阪府', impact: 890.2, changeRate: 1.8 },
+            { name: '愛知県', impact: 720.8, changeRate: 1.9 },
+            { name: '神奈川県', impact: 680.3, changeRate: 1.7 },
+            { name: '埼玉県', impact: 420.1, changeRate: 1.5 },
+            { name: '千葉県', impact: 380.7, changeRate: 1.4 },
+            { name: '兵庫県', impact: 350.2, changeRate: 1.6 },
+            { name: '福岡県', impact: 290.8, changeRate: 1.3 },
+            { name: '北海道', impact: 280.5, changeRate: 1.2 },
+            { name: '静岡県', impact: 250.3, changeRate: 1.1 }
+          ],
+          disparity: {
+            before: 1.45,
+            after: 1.48,
+            change: 0.03
+          }
+        },
         taxRevenue: {
           currentTotal: 65.2, // 兆円
           impactAmount: getTaxRevenueImpact(selectedPolicy, selectedScenario),
@@ -344,7 +364,7 @@ export default function Home() {
     }
     
     setIsLoading(false);
-    setCurrentStep(analysisType === 'personal' ? 4 : 3);
+    setCurrentStep(analysisType === 'personal' ? 4 : 4);
   };
 
   const getScenarioImpact = (policyId: string, scenario: ScenarioData | null) => {
@@ -705,7 +725,7 @@ export default function Home() {
         )}
 
         {/* Step 3: Results */}
-        {currentStep === 3 && simulationResults && (
+        {currentStep === 4 && simulationResults && (
           <div className="space-y-6">
             <div className="text-center mb-8">
               <h2 className="text-3xl font-bold text-slate-900 mb-4">
@@ -726,6 +746,40 @@ export default function Home() {
                 className="px-8 py-3 text-lg"
               >
                 新しいシミュレーション
+              </Button>
+              <Button 
+                size="lg"
+                className="px-8 py-3 text-lg bg-teal-600 hover:bg-teal-700"
+              >
+                <TrendingUp className="w-5 h-5 mr-2" />
+                詳細レポートをダウンロード
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 4: Fiscal Results */}
+        {currentStep === 4 && fiscalResults && (
+          <div className="space-y-6">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-slate-900 mb-4">
+                税収影響分析結果
+              </h2>
+              <p className="text-lg text-slate-600">
+                {fiscalResults.policy?.name}による税収・経済への影響分析
+              </p>
+            </div>
+
+            <FiscalAnalysisResults results={fiscalResults} />
+
+            <div className="flex justify-center space-x-4 pt-6">
+              <Button 
+                variant="outline"
+                onClick={resetSimulation}
+                size="lg"
+                className="px-8 py-3 text-lg"
+              >
+                新しい分析
               </Button>
               <Button 
                 size="lg"
