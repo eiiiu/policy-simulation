@@ -160,7 +160,7 @@ export default function FiscalAnalysisResults({ results }: FiscalAnalysisResults
                 <div className="text-center">
                   <div className="flex items-center justify-center space-x-2 mb-2">
                     {getImpactIcon(taxRevenue.localImpact || 0)}
-                    <span className={`text-4xl font-bold ${getImpactColor(taxRevenue.localImpact)}`}>
+                    <span className={`text-4xl font-bold ${getImpactColor(taxRevenue.localImpact || 0)}`}>
                       {(taxRevenue.localImpact || 0) > 0 ? '+' : ''}{(taxRevenue.localImpact || 0).toFixed(1)}兆円
                     </span>
                   </div>
