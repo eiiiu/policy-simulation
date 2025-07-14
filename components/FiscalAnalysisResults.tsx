@@ -21,7 +21,44 @@ import {
 } from 'lucide-react';
 
 interface FiscalAnalysisResultsProps {
-  results: any;
+  results: {
+    policy: any;
+    scenario: any;
+    taxRevenue: {
+      currentTotal: number;
+      impactAmount: number;
+      newTotal: number;
+      impactPercentage: number;
+      localImpact?: number;
+    };
+    alternativeTaxes: Array<{
+      taxType: string;
+      rate: string;
+      probability: number;
+      impact: string;
+    }>;
+    economicImpact: {
+      gdpImpact: number;
+      employmentImpact: number;
+      consumptionImpact: number;
+    };
+    timeline: Array<{
+      year: string;
+      impact: number;
+    }>;
+    regionalImpact: {
+      topRegions: Array<{
+        name: string;
+        impact: number;
+        changeRate: number;
+      }>;
+      disparity: {
+        before: number;
+        after: number;
+        change: number;
+      };
+    };
+  };
 }
 
 export default function FiscalAnalysisResults({ results }: FiscalAnalysisResultsProps) {
@@ -102,10 +139,10 @@ export default function FiscalAnalysisResults({ results }: FiscalAnalysisResults
                     </span>
                   </div>
                   <p className="text-sm text-slate-600 mb-4">
-                    現在の税収: {taxRevenue.currentTotal}兆円 → {taxRevenue.newTotal.toFixed(1)}兆円
+                    現在の税収: {taxRevenue.currentTotal}兆円 → {taxRevenue.newTotal?.toFixed(1)}兆円
                   </p>
                   <div className="text-lg font-semibold">
-                    変化率: {taxRevenue.impactPercentage > 0 ? '+' : ''}{taxRevenue.impactPercentage.toFixed(1)}%
+                    変化率: {taxRevenue.impactPercentage > 0 ? '+' : ''}{taxRevenue.impactPercentage?.toFixed(1)}%
                   </div>
                 </div>
               </CardContent>
@@ -122,16 +159,16 @@ export default function FiscalAnalysisResults({ results }: FiscalAnalysisResults
               <CardContent>
                 <div className="text-center">
                   <div className="flex items-center justify-center space-x-2 mb-2">
-                    {getImpactIcon(taxRevenue.localImpact)}
+                    {getImpactIcon(taxRevenue.localImpact || 0)}
                     <span className={`text-4xl font-bold ${getImpactColor(taxRevenue.localImpact)}`}>
-                      {taxRevenue.localImpact > 0 ? '+' : ''}{taxRevenue.localImpact.toFixed(1)}兆円
+                      {(taxRevenue.localImpact || 0) > 0 ? '+' : ''}{(taxRevenue.localImpact || 0).toFixed(1)}兆円
                     </span>
                   </div>
                   <p className="text-sm text-slate-600 mb-4">
                     地方税収への波及効果
                   </p>
                   <div className="text-lg font-semibold">
-                    変化率: {(taxRevenue.localImpact / 25.8 * 100) > 0 ? '+' : ''}{(taxRevenue.localImpact / 25.8 * 100).toFixed(1)}%
+                    変化率: {((taxRevenue.localImpact || 0) / 25.8 * 100) > 0 ? '+' : ''}{((taxRevenue.localImpact || 0) / 25.8 * 100).toFixed(1)}%
                   </div>
                 </div>
               </CardContent>

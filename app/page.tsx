@@ -13,6 +13,7 @@ import { Calculator, TrendingUp, Users, MapPin, BarChart3, Lightbulb, ChevronRig
 import FiscalAnalysisResults from '@/components/FiscalAnalysisResults';
 import SimulationResults from '@/components/SimulationResults';
 import PolicyDetailModal from '@/components/PolicyDetailModal';
+import { getRegionalData } from '@/lib/regional-data';
 
 interface UserParameters {
   income: string;
@@ -100,6 +101,18 @@ interface FiscalResults {
     year: string;
     impact: number;
   }>;
+  regionalImpact: {
+    topRegions: Array<{
+      name: string;
+      impact: number;
+      changeRate: number;
+    }>;
+    disparity: {
+      before: number;
+      after: number;
+      change: number;
+    };
+  };
 }
 
 export default function Home() {
@@ -116,7 +129,7 @@ export default function Home() {
   const [selectedScenario, setSelectedScenario] = useState<ScenarioData | null>(null);
   const [showPolicyModal, setShowPolicyModal] = useState(false);
   const [simulationResults, setSimulationResults] = useState<SimulationResults | null>(null);
-  const [fiscalResults, setFiscalResults] = useState<any>(null);
+  const [fiscalResults, setFiscalResults] = useState<FiscalResults | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const policies = [
@@ -319,7 +332,7 @@ export default function Home() {
       setSimulationResults(mockResults);
     } else {
       // 税収影響分析
-      const mockFiscalResults = {
+      const mockFiscalResults: FiscalResults = {
         policy: selectedPolicyData,
         scenario: selectedScenario,
         regionalImpact: {
@@ -364,7 +377,7 @@ export default function Home() {
     }
     
     setIsLoading(false);
-    setCurrentStep(analysisType === 'personal' ? 4 : 4);
+    setCurrentStep(4);
   };
 
   const getScenarioImpact = (policyId: string, scenario: ScenarioData | null) => {
@@ -509,7 +522,7 @@ export default function Home() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-4">
-              {Array.from({ length: analysisType === 'personal' ? 4 : 3 }, (_, i) => i + 1).map((step) => (
+              {Array.from({ length: analysisType === 'personal' ? 4 : 2 }, (_, i) => i + 1).map((step) => (
                 <div key={step} className="flex items-center">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                     currentStep >= step 
@@ -518,7 +531,7 @@ export default function Home() {
                   }`}>
                     {step}
                   </div>
-                  {step < (analysisType === 'personal' ? 4 : 3) && (
+                  {step < (analysisType === 'personal' ? 4 : 2) && (
                     <ChevronRight className={`w-4 h-4 mx-2 ${
                       currentStep > step ? 'text-blue-600' : 'text-slate-400'
                     }`} />
@@ -527,17 +540,85 @@ export default function Home() {
               ))}
             </div>
             <div className="text-sm text-slate-600">
-              ステップ {currentStep} / {analysisType === 'personal' ? 4 : 3}
+              ステップ {currentStep} / {analysisType === 'personal' ? 4 : 2}
             </div>
           </div>
-          <Progress value={(currentStep / (analysisType === 'personal' ? 4 : 3)) * 100} className="h-2" />
+          <Progress value={(currentStep / (analysisType === 'personal' ? 4 : 2)) * 100} className="h-2" />
         </div>
 
-        {/* Step 1: User Parameters */}
-        {currentStep === 1 && (
+        {/* Step 1: Analysis Type Selection */}
+        {currentStep === 1 && !analysisType && (
           <div className="space-y-6">
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-slate-900 mb-4">
+              <h2 className="text-2xl font-bold text-slate-900 mb-4">
+                分析の種類を選択してください
+              </h2>
+              <p className="text-lg text-slate-600">
+                個人への影響分析か、税収への影響分析かを選択してください
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+              <Card 
+                className="transition-all duration-200 shadow-lg border-0 hover:shadow-xl hover:scale-105 cursor-pointer"
+                onClick={() => {
+                  setAnalysisType('personal');
+                  setCurrentStep(1);
+                }}
+              >
+                <CardHeader className="text-center pb-4">
+                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Users className="w-8 h-8 text-blue-600" />
+                  </div>
+                  <CardTitle className="text-xl">個人影響分析</CardTitle>
+                  <CardDescription className="text-base">
+                    政策変更があなたの家計に与える具体的な影響を分析
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="text-center">
+                  <ul className="text-sm text-slate-600 space-y-2">
+                    <li>• 月収への影響額</li>
+                    <li>• 家計支出の変化</li>
+                    <li>• 地域別の影響差</li>
+                    <li>• 時系列での変化予測</li>
+                  </ul>
+                </CardContent>
+              </Card>
+
+              <Card 
+                className="transition-all duration-200 shadow-lg border-0 hover:shadow-xl hover:scale-105 cursor-pointer"
+                onClick={() => {
+                  setAnalysisType('fiscal');
+                  setCurrentStep(1);
+                }}
+              >
+                <CardHeader className="text-center pb-4">
+                  <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <BarChart3 className="w-8 h-8 text-teal-600" />
+                  </div>
+                  <CardTitle className="text-xl">税収影響分析</CardTitle>
+                  <CardDescription className="text-base">
+                    政策変更が国・地方の税収に与える影響を分析
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="text-center">
+                  <ul className="text-sm text-slate-600 space-y-2">
+                    <li>• 税収増減の予測</li>
+                    <li>• 代替財源の提案</li>
+                    <li>• 経済全体への影響</li>
+                    <li>• 地域間格差の変化</li>
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )}
+
+        {/* Step 1: User Parameters (Personal Analysis) */}
+        {currentStep === 1 && analysisType === 'personal' && (
+          <div className="space-y-6">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-slate-900 mb-4">
                 あなたの基本情報を入力してください
               </h2>
               <p className="text-lg text-slate-600">
@@ -639,10 +720,10 @@ export default function Home() {
         )}
 
         {/* Step 2: Policy Selection */}
-        {currentStep === 2 && (
+        {(currentStep === 2 || (currentStep === 1 && analysisType === 'fiscal')) && (
           <div className="space-y-6">
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-slate-900 mb-4">
+              <h2 className="text-2xl font-bold text-slate-900 mb-4">
                 分析したい政策を選択してください
               </h2>
               <p className="text-lg text-slate-600">
@@ -696,7 +777,14 @@ export default function Home() {
             <div className="flex justify-center space-x-4 pt-6">
               <Button 
                 variant="outline"
-                onClick={() => setCurrentStep(1)}
+                onClick={() => {
+                  if (analysisType === 'personal') {
+                    setCurrentStep(1);
+                  } else {
+                    setAnalysisType('');
+                    setCurrentStep(1);
+                  }
+                }}
                 size="lg"
                 className="px-8 py-3 text-lg"
               >
@@ -725,14 +813,14 @@ export default function Home() {
         )}
 
         {/* Step 3: Results */}
-        {currentStep === 4 && simulationResults && (
+        {currentStep === 4 && simulationResults && analysisType === 'personal' && (
           <div className="space-y-6">
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-slate-900 mb-4">
+              <h2 className="text-2xl font-bold text-slate-900 mb-4">
                 シミュレーション結果
               </h2>
               <p className="text-lg text-slate-600">
-                {simulationResults.policy.name}による影響分析結果
+                {simulationResults.policy?.name}による影響分析結果
               </p>
             </div>
 
@@ -759,10 +847,10 @@ export default function Home() {
         )}
 
         {/* Step 4: Fiscal Results */}
-        {currentStep === 4 && fiscalResults && (
+        {currentStep === 4 && fiscalResults && analysisType === 'fiscal' && (
           <div className="space-y-6">
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-slate-900 mb-4">
+              <h2 className="text-2xl font-bold text-slate-900 mb-4">
                 税収影響分析結果
               </h2>
               <p className="text-lg text-slate-600">
